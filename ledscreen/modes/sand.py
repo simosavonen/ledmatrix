@@ -4,12 +4,22 @@ from datetime import datetime
 from ..canvas import Canvas
 from .base import Mode
 
-"""Falling-sand physics toy: sand and water rain in from the top, pile up,
-flow around each other, and the board clears itself once it gets too full."""
+"""Falling-sand physics toy: water drizzles in steadily everywhere, while
+sand only arrives in bucket-sized pours - a steady stream from one random
+spot for a few seconds, then nothing for a while - so it piles into
+mounds and displaces the water pooled underneath instead of raining
+down uniformly."""
 
 STEP_INTERVAL = 0.04
 FILL_CLEAR_THRESHOLD = 0.85
 FILL_CHECK_EVERY = 20
+
+WATER_SPAWN_CHANCE = 0.5  # chance per step of one new water drop somewhere random
+
+POUR_DURATION_STEPS = (40, 100)  # ~1.6-4s of active pouring
+POUR_GAP_STEPS = (75, 225)  # ~3-9s of no sand between pours
+POUR_RATE = 2  # sand grains attempted per step while a pour is active
+POUR_SPREAD = 1  # pour wanders +-1 column around its center, like a loose stream
 
 SAND_COLOR = (210, 170, 80)
 WATER_COLOR = (40, 130, 230)
@@ -23,15 +33,23 @@ class SandMode(Mode):
         self._w = self._h = 0
         self._last_step: datetime | None = None
         self._steps_since_check = 0
+        self._pour_x: int | None = None
+        self._pour_remaining = 0
+        self._next_pour_in = 0
 
     def reset(self) -> None:
         self._grid = []
         self._last_step = None
         self._steps_since_check = 0
+        self._pour_x = None
+        self._pour_remaining = 0
+        self._next_pour_in = 0
 
     def _init(self, canvas: Canvas) -> None:
         self._w, self._h = canvas.width, canvas.height
         self._grid = [[None for _ in range(self._w)] for _ in range(self._h)]
+        self._pour_remaining = 0
+        self._next_pour_in = random.randint(10, 50)  # a pour starts soon after reset, not after a long wait
 
     def _empty(self, x: int, y: int) -> bool:
         if x < 0 or x >= self._w or y < 0 or y >= self._h:
@@ -67,10 +85,24 @@ class SandMode(Mode):
         return (x, y)
 
     def _spawn(self) -> None:
-        for _ in range(random.randint(0, 2)):
+        if random.random() < WATER_SPAWN_CHANCE:
             x = random.randrange(self._w)
             if self._grid[0][x] is None:
-                self._grid[0][x] = "sand" if random.random() < 0.65 else "water"
+                self._grid[0][x] = "water"
+
+        if self._pour_remaining > 0:
+            self._pour_remaining -= 1
+            for _ in range(POUR_RATE):
+                x = self._pour_x + random.randint(-POUR_SPREAD, POUR_SPREAD)
+                if 0 <= x < self._w and self._grid[0][x] is None:
+                    self._grid[0][x] = "sand"
+            if self._pour_remaining == 0:
+                self._next_pour_in = random.randint(*POUR_GAP_STEPS)
+        else:
+            self._next_pour_in -= 1
+            if self._next_pour_in <= 0:
+                self._pour_x = random.randrange(POUR_SPREAD, self._w - POUR_SPREAD)
+                self._pour_remaining = random.randint(*POUR_DURATION_STEPS)
 
     def _step(self) -> None:
         self._spawn()
@@ -101,6 +133,8 @@ class SandMode(Mode):
             filled = sum(1 for row in self._grid for c in row if c is not None)
             if filled / (self._w * self._h) > FILL_CLEAR_THRESHOLD:
                 self._grid = [[None for _ in range(self._w)] for _ in range(self._h)]
+                self._pour_remaining = 0
+                self._next_pour_in = random.randint(10, 50)
 
     def render(self, canvas: Canvas, now: datetime) -> None:
         if not self._grid or self._last_step is None:
