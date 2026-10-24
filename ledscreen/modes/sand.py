@@ -38,15 +38,25 @@ class SandMode(Mode):
             return False
         return self._grid[y][x] is None
 
+    def _can_enter(self, x: int, y: int, material: str) -> bool:
+        if x < 0 or x >= self._w or y < 0 or y >= self._h:
+            return False
+        target = self._grid[y][x]
+        if target is None:
+            return True
+        # Sand is denser than water: it sinks through and displaces it,
+        # which is what makes water end up settling on top over time.
+        return material == "sand" and target == "water"
+
     def _move_target(self, x: int, y: int, material: str) -> tuple[int, int]:
         down = (x, y + 1)
         diag = [(x - 1, y + 1), (x + 1, y + 1)]
         random.shuffle(diag)
 
-        if self._empty(*down):
+        if self._can_enter(*down, material):
             return down
         for d in diag:
-            if self._empty(*d):
+            if self._can_enter(*d, material):
                 return d
         if material == "water":
             side = [(x - 1, y), (x + 1, y)]
@@ -76,9 +86,12 @@ class SandMode(Mode):
                     continue
                 nx, ny = self._move_target(x, y, material)
                 if (nx, ny) != (x, y):
+                    displaced = self._grid[ny][nx]  # None, or water being sunk through
                     self._grid[ny][nx] = material
-                    self._grid[y][x] = None
+                    self._grid[y][x] = displaced
                     moved.add((nx, ny))
+                    if displaced is not None:
+                        moved.add((x, y))
                 else:
                     moved.add((x, y))
 

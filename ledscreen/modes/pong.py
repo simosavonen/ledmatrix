@@ -82,6 +82,7 @@ class PongMode(Mode):
         s["left_y"] = min(max(s["left_y"], 0), canvas.height - PADDLE_HEIGHT)
         s["right_y"] = min(max(s["right_y"], 0), canvas.height - PADDLE_HEIGHT)
 
+        prev_x = s["ball_x"]
         s["ball_x"] += s["ball_vx"] * dt
         s["ball_y"] += s["ball_vy"] * dt
 
@@ -92,20 +93,28 @@ class PongMode(Mode):
             s["ball_y"] = canvas.height - 1
             s["ball_vy"] *= -1
 
-        if s["ball_vx"] < 0 and s["ball_x"] <= PADDLE_X_LEFT + 1:
+        left_front = PADDLE_X_LEFT + PADDLE_WIDTH - 1
+        right_front = PADDLE_X_RIGHT
+
+        # Bounce is only evaluated at the exact frame the ball crosses the
+        # paddle's front surface, not "is it currently past it" - otherwise
+        # a briefly-misaligned paddle lets the ball sail deep behind it and
+        # only bounce once the paddle catches up, which looks like the ball
+        # passed clean through and bounced off the far edge instead.
+        if s["ball_vx"] < 0 and prev_x > left_front >= s["ball_x"]:
             if s["left_y"] - 1 <= s["ball_y"] <= s["left_y"] + PADDLE_HEIGHT + 1:
                 offset = (s["ball_y"] - (s["left_y"] + PADDLE_HEIGHT / 2)) / (PADDLE_HEIGHT / 2)
                 speed = min(abs(s["ball_vx"]) * 1.08, BALL_SPEED_MAX)
                 s["ball_vx"] = speed
                 s["ball_vy"] = offset * speed * 0.6
-                s["ball_x"] = PADDLE_X_LEFT + PADDLE_WIDTH  # never leave it past the paddle
-        elif s["ball_vx"] > 0 and s["ball_x"] >= PADDLE_X_RIGHT - 1:
+                s["ball_x"] = PADDLE_X_LEFT + PADDLE_WIDTH
+        elif s["ball_vx"] > 0 and prev_x < right_front <= s["ball_x"]:
             if s["right_y"] - 1 <= s["ball_y"] <= s["right_y"] + PADDLE_HEIGHT + 1:
                 offset = (s["ball_y"] - (s["right_y"] + PADDLE_HEIGHT / 2)) / (PADDLE_HEIGHT / 2)
                 speed = min(abs(s["ball_vx"]) * 1.08, BALL_SPEED_MAX)
                 s["ball_vx"] = -speed
                 s["ball_vy"] = offset * speed * 0.6
-                s["ball_x"] = PADDLE_X_RIGHT - 1  # never leave it past the paddle
+                s["ball_x"] = PADDLE_X_RIGHT - 1
 
         if s["ball_x"] < 0:
             s["right_score"] = (s["right_score"] + 1) % 10
