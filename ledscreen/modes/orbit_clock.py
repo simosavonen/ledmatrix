@@ -13,13 +13,19 @@ CENTER_COLOR = (60, 60, 90)
 # of the dial fits, so it reads as a tight close-up on the second hand
 # rather than a whole clock face shrunk to fit.
 RADIUS = 22
+# Where along the second hand the camera is anchored, as a fraction of
+# RADIUS from the true dial center. Anchoring at the tip (1.0) pins the
+# tip dead still, which looks static - anchoring at the midpoint instead
+# lets both the tip and the true dial center sweep a visible arc around
+# the fixed screen-center point, in opposite directions.
+ANCHOR_FRACTION = 0.5
 
 
 class OrbitClockMode(Mode):
-    """Same clock, inverted reference frame: the second hand's tip is pinned
-    to the dead center of the screen, so instead of watching a hand sweep
-    around a fixed face, you watch the whole dial swing around a fixed tip -
-    the clock orbits the second hand instead of the other way around."""
+    """Same clock, inverted reference frame: a point partway along the
+    second hand is pinned to the dead center of the screen, so instead of
+    watching a hand sweep around a fixed face, you watch the whole dial -
+    tip included - arc around that fixed point."""
 
     name = "orbit_clock"
 
@@ -32,17 +38,19 @@ class OrbitClockMode(Mode):
         hour = (now.hour % 12) + minute / 60
 
         sec_angle = sec / 60 * 2 * math.pi
-        # Offset of the second hand's tip from the TRUE dial center. Shifting
-        # every other point by minus this offset pins the tip at (cx, cy).
-        tip_dx = math.sin(sec_angle) * RADIUS
-        tip_dy = -math.cos(sec_angle) * RADIUS
+        # Offset of the anchor point (second hand's midpoint) from the TRUE
+        # dial center. Shifting every other point by minus this offset pins
+        # the anchor at (cx, cy); the tip, being farther out than the
+        # anchor, ends up tracing its own arc around that fixed point.
+        anchor_dx = math.sin(sec_angle) * RADIUS * ANCHOR_FRACTION
+        anchor_dy = -math.cos(sec_angle) * RADIUS * ANCHOR_FRACTION
 
         def plot(dx: float, dy: float, radius: float, color) -> None:
-            canvas.draw_dot(cx + dx - tip_dx, cy + dy - tip_dy, radius, color)
+            canvas.draw_dot(cx + dx - anchor_dx, cy + dy - anchor_dy, radius, color)
 
         def line(dx: float, dy: float, color, width: float) -> None:
             canvas.draw_line_aa(
-                cx - tip_dx, cy - tip_dy, cx + dx - tip_dx, cy + dy - tip_dy, color, width=width
+                cx - anchor_dx, cy - anchor_dy, cx + dx - anchor_dx, cy + dy - anchor_dy, color, width=width
             )
 
         for i in range(12):
@@ -54,6 +62,6 @@ class OrbitClockMode(Mode):
         line(math.sin(hour_angle) * RADIUS * 0.5, -math.cos(hour_angle) * RADIUS * 0.5, HOUR_COLOR, 2.6)
         line(math.sin(minute_angle) * RADIUS * 0.85, -math.cos(minute_angle) * RADIUS * 0.85, MINUTE_COLOR, 2.0)
 
-        plot(0, 0, 1.4, CENTER_COLOR)  # the true dial center, swinging around the fixed tip
-        canvas.draw_dot(cx, cy, 1.6, TIP_COLOR)  # the pinned second-hand tip
+        plot(0, 0, 1.4, CENTER_COLOR)  # the true dial center, arcing around the fixed anchor
+        plot(math.sin(sec_angle) * RADIUS, -math.cos(sec_angle) * RADIUS, 1.6, TIP_COLOR)  # the second-hand tip, arcing the other way
         canvas.bloom()
