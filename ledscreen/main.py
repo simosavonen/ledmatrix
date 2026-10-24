@@ -3,11 +3,13 @@ import time
 from datetime import datetime
 
 from .canvas import Canvas
+from .modes.analog_clock import AnalogClockMode
 from .modes.aquarium import AquariumMode
 from .modes.clock import ClockMode
 from .modes.ecosystem import EcosystemMode
 from .modes.life import LifeMode
 from .modes.matrixrain import MatrixRainMode
+from .modes.orbit_clock import OrbitClockMode
 from .modes.pong import PongMode
 from .modes.sand import SandMode
 from .rotation import RotationController
@@ -16,6 +18,8 @@ FPS = 30
 
 MODES = {
     "clock": ClockMode,
+    "analog_clock": AnalogClockMode,
+    "orbit_clock": OrbitClockMode,
     "matrix_rain": MatrixRainMode,
     "life": LifeMode,
     "ecosystem": EcosystemMode,
@@ -27,7 +31,16 @@ MODES = {
 
 def build_rotation(clock_lead: float, fun_duration: float) -> RotationController:
     anchor = ClockMode()
-    fun_modes = [MatrixRainMode(), LifeMode(), EcosystemMode(), SandMode(), AquariumMode(), PongMode()]
+    fun_modes = [
+        MatrixRainMode(),
+        LifeMode(),
+        EcosystemMode(),
+        SandMode(),
+        AquariumMode(),
+        PongMode(),
+        AnalogClockMode(),
+        OrbitClockMode(),
+    ]
     return RotationController(
         anchor=anchor,
         fun_modes=fun_modes,

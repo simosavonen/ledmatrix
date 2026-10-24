@@ -89,6 +89,14 @@ class Canvas:
             cursor += self.draw_glyph(cursor, y, char, color, scale)
         return cursor - x
 
+    def draw_line_aa(self, x0: float, y0: float, x1: float, y1: float, color: Color, width: float = 1.0) -> None:
+        """An anti-aliased line from (x0,y0) to (x1,y1), built from soft dots."""
+        length = ((x1 - x0) ** 2 + (y1 - y0) ** 2) ** 0.5
+        steps = max(1, int(length * 2))
+        for i in range(steps + 1):
+            t = i / steps
+            self.draw_dot(x0 + (x1 - x0) * t, y0 + (y1 - y0) * t, width / 2, color)
+
     def bloom(self, radius: float = 1.2, strength: float = 0.55) -> None:
         """Blurs a dimmed copy of the frame and screen-blends it back in, so
         lit pixels bleed softly into their neighbors instead of looking like

@@ -33,3 +33,4 @@ class ClockMode(Mode):
         fraction = (now.second + now.microsecond / 1_000_000) / 60.0
         filled = int(fraction * canvas.width)
         canvas.draw_hline(canvas.height - 1, 0, filled, SECONDS_BAR_COLOR)
+        canvas.bloom()
