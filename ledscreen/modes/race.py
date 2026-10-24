@@ -12,8 +12,6 @@ road, which ends the race and starts a fresh one."""
 STEP_INTERVAL = 0.1  # one simulation tick = one new track row
 
 ROAD_WIDTH = 20
-ROAD_COLOR = (45, 45, 55)
-GRASS_COLOR = (20, 55, 25)
 EDGE_COLOR = (230, 210, 60)
 DASH_COLOR = (150, 150, 160)
 CAR_COLOR = (230, 60, 40)
@@ -123,12 +121,11 @@ class RaceMode(Mode):
             self._last_step = now
             self._step()
 
-        canvas.clear(GRASS_COLOR)
+        canvas.clear((0, 0, 0))
         for y in range(self._h):
             center = self._centers[y]
             left = int(center - ROAD_WIDTH / 2)
             right = int(center + ROAD_WIDTH / 2)
-            canvas.draw_hline(y, max(0, left), min(self._w, right), ROAD_COLOR)
             if 0 <= left < self._w:
                 canvas.set_pixel(left, y, EDGE_COLOR)
             if 0 <= right < self._w:
