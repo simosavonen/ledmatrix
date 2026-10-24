@@ -12,6 +12,7 @@ from .modes.giant_clock import GiantClockMode
 from .modes.life import LifeMode
 from .modes.orbit_clock import OrbitClockMode
 from .modes.pong import PongMode
+from .modes.race import RaceMode
 from .modes.rings_clock import RingsClockMode
 from .modes.sand import SandMode
 from .modes.thick_ring_clock import ThickRingClockMode
@@ -32,6 +33,7 @@ MODES = {
     "sand": SandMode,
     "aquarium": AquariumMode,
     "pong": PongMode,
+    "race": RaceMode,
 }
 
 
@@ -51,6 +53,7 @@ def build_rotation(clock_lead: float, fun_duration: float) -> RotationController
         SandMode(),
         AquariumMode(),
         PongMode(),
+        RaceMode(),
     ]
     return RotationController(
         clock_modes=clock_modes,
