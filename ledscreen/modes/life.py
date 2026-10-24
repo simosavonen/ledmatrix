@@ -85,4 +85,6 @@ class LifeMode(Mode):
         canvas.clear((0, 0, 0))
         for (x, y) in self._grid:
             canvas.set_pixel(x, y, color)
-        canvas.bloom()
+        # Dense, crowded generations can have most of the grid lit, so the
+        # default bloom compounds across many adjacent live cells at once.
+        canvas.bloom(radius=1.0, strength=0.3)
