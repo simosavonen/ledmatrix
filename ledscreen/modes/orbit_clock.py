@@ -9,7 +9,10 @@ HOUR_COLOR = (255, 150, 20)
 MINUTE_COLOR = (230, 230, 240)
 TIP_COLOR = (255, 255, 255)
 CENTER_COLOR = (60, 60, 90)
-RADIUS = 9  # the dial swings partly off-screen at extremes - that's the intended "zoomed in" feel
+# Big relative to the 64x32 screen on purpose: at any moment only a slice
+# of the dial fits, so it reads as a tight close-up on the second hand
+# rather than a whole clock face shrunk to fit.
+RADIUS = 22
 
 
 class OrbitClockMode(Mode):
@@ -44,13 +47,13 @@ class OrbitClockMode(Mode):
 
         for i in range(12):
             angle = i / 12 * 2 * math.pi
-            plot(math.sin(angle) * RADIUS, -math.cos(angle) * RADIUS, 0.5, TICK_COLOR)
+            plot(math.sin(angle) * RADIUS, -math.cos(angle) * RADIUS, 0.9, TICK_COLOR)
 
         hour_angle = hour / 12 * 2 * math.pi
         minute_angle = minute / 60 * 2 * math.pi
-        line(math.sin(hour_angle) * RADIUS * 0.5, -math.cos(hour_angle) * RADIUS * 0.5, HOUR_COLOR, 1.6)
-        line(math.sin(minute_angle) * RADIUS * 0.85, -math.cos(minute_angle) * RADIUS * 0.85, MINUTE_COLOR, 1.2)
+        line(math.sin(hour_angle) * RADIUS * 0.5, -math.cos(hour_angle) * RADIUS * 0.5, HOUR_COLOR, 2.6)
+        line(math.sin(minute_angle) * RADIUS * 0.85, -math.cos(minute_angle) * RADIUS * 0.85, MINUTE_COLOR, 2.0)
 
-        plot(0, 0, 0.9, CENTER_COLOR)  # the true dial center, swinging around the fixed tip
-        canvas.draw_dot(cx, cy, 1.0, TIP_COLOR)  # the pinned second-hand tip
+        plot(0, 0, 1.4, CENTER_COLOR)  # the true dial center, swinging around the fixed tip
+        canvas.draw_dot(cx, cy, 1.6, TIP_COLOR)  # the pinned second-hand tip
         canvas.bloom()
