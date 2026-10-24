@@ -98,12 +98,14 @@ class PongMode(Mode):
                 speed = min(abs(s["ball_vx"]) * 1.08, BALL_SPEED_MAX)
                 s["ball_vx"] = speed
                 s["ball_vy"] = offset * speed * 0.6
+                s["ball_x"] = PADDLE_X_LEFT + PADDLE_WIDTH  # never leave it past the paddle
         elif s["ball_vx"] > 0 and s["ball_x"] >= PADDLE_X_RIGHT - 1:
             if s["right_y"] - 1 <= s["ball_y"] <= s["right_y"] + PADDLE_HEIGHT + 1:
                 offset = (s["ball_y"] - (s["right_y"] + PADDLE_HEIGHT / 2)) / (PADDLE_HEIGHT / 2)
                 speed = min(abs(s["ball_vx"]) * 1.08, BALL_SPEED_MAX)
                 s["ball_vx"] = -speed
                 s["ball_vy"] = offset * speed * 0.6
+                s["ball_x"] = PADDLE_X_RIGHT - 1  # never leave it past the paddle
 
         if s["ball_x"] < 0:
             s["right_score"] = (s["right_score"] + 1) % 10
