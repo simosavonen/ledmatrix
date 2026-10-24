@@ -20,6 +20,10 @@ BOARD_Y = (32 - ROWS * CELL) // 2
 
 SPAWN_COL = COLS // 2 - 2
 
+PREVIEW_CELL = 4
+PREVIEW_X = (32 - PREVIEW_CELL * 4) // 2
+PREVIEW_Y = 14
+
 BORDER_COLOR = (20, 20, 28)
 SCORE_COLOR = (230, 230, 240)
 
@@ -253,11 +257,11 @@ class TetrisMode(Mode):
 
         next_color = PIECE_COLORS[self._next_type]
         for dr, dc in self._cells(self._next_type, 0):
-            self._draw_cell(canvas, 4 + dc * CELL, 14 + dr * CELL, next_color)
+            self._draw_cell(canvas, PREVIEW_X + dc * PREVIEW_CELL, PREVIEW_Y + dr * PREVIEW_CELL, next_color, PREVIEW_CELL)
 
         canvas.bloom()
 
-    def _draw_cell(self, canvas: Canvas, x: int, y: int, color) -> None:
-        for yy in range(y, y + CELL):
-            for xx in range(x, x + CELL):
+    def _draw_cell(self, canvas: Canvas, x: int, y: int, color, size: int = CELL) -> None:
+        for yy in range(y, y + size):
+            for xx in range(x, x + size):
                 canvas.set_pixel(xx, yy, color)
