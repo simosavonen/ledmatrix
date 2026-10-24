@@ -22,7 +22,9 @@ POUR_RATE = 2  # sand grains attempted per step while a pour is active
 POUR_SPREAD = 1  # pour wanders +-1 column around its center, like a loose stream
 
 PLATFORM_COUNT = (2, 3)
-PLATFORM_WIDTH = (10, 22)
+PLATFORM_WIDTH = (8, 24)
+PLATFORM_MIN_Y_GAP = 5  # how far apart (in rows) overlapping platforms must be
+PLATFORM_PLACEMENT_ATTEMPTS = 20
 
 SAND_COLOR = (210, 170, 80)
 WATER_COLOR = (40, 130, 230)
@@ -60,12 +62,25 @@ class SandMode(Mode):
         # Fixed, immovable ledges for sand and water to pile on and spill
         # off of - a few random ones each round, kept clear of the spawn
         # row up top and with room below to pile up before overflowing.
+        # Retries placement to keep them spread out in both width and
+        # position instead of stacking into one boring overlapping mass.
         count = random.randint(*PLATFORM_COUNT)
+        placed: list[tuple[int, int, int]] = []  # (x0, x1, y)
         for _ in range(count):
-            width = random.randint(*PLATFORM_WIDTH)
-            x0 = random.randint(0, max(0, self._w - width))
-            y = random.randint(self._h // 3, self._h - 4)
-            for x in range(x0, min(self._w, x0 + width)):
+            x0 = x1 = y = 0
+            for _attempt in range(PLATFORM_PLACEMENT_ATTEMPTS):
+                width = random.randint(*PLATFORM_WIDTH)
+                x0 = random.randint(0, max(0, self._w - width))
+                x1 = x0 + width
+                y = random.randint(self._h // 3, self._h - 4)
+                conflict = any(
+                    abs(y - py) < PLATFORM_MIN_Y_GAP and x0 < px1 and x1 > px0
+                    for px0, px1, py in placed
+                )
+                if not conflict:
+                    break
+            placed.append((x0, x1, y))
+            for x in range(x0, min(self._w, x1)):
                 self._grid[y][x] = "platform"
 
     def _empty(self, x: int, y: int) -> bool:
