@@ -8,7 +8,6 @@ from .modes.aquarium import AquariumMode
 from .modes.clock import ClockMode
 from .modes.ecosystem import EcosystemMode
 from .modes.life import LifeMode
-from .modes.matrixrain import MatrixRainMode
 from .modes.orbit_clock import OrbitClockMode
 from .modes.pong import PongMode
 from .modes.sand import SandMode
@@ -20,7 +19,6 @@ MODES = {
     "clock": ClockMode,
     "analog_clock": AnalogClockMode,
     "orbit_clock": OrbitClockMode,
-    "matrix_rain": MatrixRainMode,
     "life": LifeMode,
     "ecosystem": EcosystemMode,
     "sand": SandMode,
@@ -36,7 +34,6 @@ def build_rotation(clock_lead: float, fun_duration: float) -> RotationController
         OrbitClockMode(),
     ]
     fun_modes = [
-        MatrixRainMode(),
         LifeMode(),
         EcosystemMode(),
         SandMode(),
