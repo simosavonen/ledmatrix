@@ -11,7 +11,8 @@ driving right-to-left, forever. An AI driver tries to track the line, with
 real attention lapses - a lapse during a sharp curve can genuinely run the
 car off the line, which ends the leg and starts a fresh one."""
 
-STEP_INTERVAL = 0.12  # one simulation tick = one new spline column
+STEP_INTERVAL = 0.05  # one simulation tick = one new spline column - fast, arcade pace
+ROAD_DOT_RADIUS = 0.9  # a touch wider than a hairline
 
 ROAD_COLOR = (90, 160, 230)
 CAR_COLOR = (230, 60, 40)
@@ -20,17 +21,24 @@ CRASH_COLOR = (255, 255, 255)
 MAX_CURVE_VEL = 0.9  # px of line-drift per column
 CURVE_ACCEL = 0.25
 
-MAX_STEER_SPEED = 20.0  # px/sec, vertical
-STEER_RESPONSIVENESS = 0.35
-LAPSE_CHANCE = 0.03  # per tick
+MAX_STEER_SPEED = 50.0  # px/sec, vertical
+STEER_RESPONSIVENESS = 0.5
+# Proportional gain on position error. Needs to be high enough that normal
+# tracking lag alone (not just lapses) stays well under TOLERANCE even at
+# the curve's max drift rate (MAX_CURVE_VEL / STEP_INTERVAL px/sec) - a
+# steady-state P-controller lags its target by roughly (target speed / gain).
+STEER_GAIN = 10.0
+# Per-tick, not per-second - rescaled down from the old slower tick rate so
+# lapses still happen about as often in real time (roughly one every ~4s).
+LAPSE_CHANCE = 0.012
 LAPSE_DURATION = (0.3, 0.9)
-TOLERANCE = 3.0  # px the car may drift from the line before it's "off"
+TOLERANCE = 4.0  # px the car may drift from the line before it's "off"
 CRASH_GRACE = 0.3
 CRASH_FLASH_DURATION = 0.6
 
 CAR_EDGE_MARGIN = 14  # how far from the leading-opposite edge the car sits
-LEG_DURATION = (12.0, 20.0)  # seconds driving one way before turning around
-CAR_EASE = 0.15  # how quickly the car slides to its new side when turning around
+LEG_DURATION = (8.0, 15.0)  # seconds driving one way before turning around
+CAR_EASE = 0.2  # how quickly the car slides to its new side when turning around
 
 
 class RaceMode(Mode):
@@ -122,7 +130,7 @@ class RaceMode(Mode):
         elif random.random() < LAPSE_CHANCE:
             self._lapse = random.uniform(*LAPSE_DURATION)
         else:
-            desired_vy = max(-MAX_STEER_SPEED, min(MAX_STEER_SPEED, (target - self._car_y) * 2.0))
+            desired_vy = max(-MAX_STEER_SPEED, min(MAX_STEER_SPEED, (target - self._car_y) * STEER_GAIN))
             self._car_vy += (desired_vy - self._car_vy) * STEER_RESPONSIVENESS
 
         self._car_y += self._car_vy * STEP_INTERVAL
@@ -146,7 +154,7 @@ class RaceMode(Mode):
 
         canvas.clear((0, 0, 0))
         for x in range(self._w):
-            canvas.draw_dot(x, self._spline[x], 0.6, ROAD_COLOR)
+            canvas.draw_dot(x, self._spline[x], ROAD_DOT_RADIUS, ROAD_COLOR)
 
         if self._crash_flash > 0:
             flash_on = int(self._crash_flash / STEP_INTERVAL) % 2 == 0
