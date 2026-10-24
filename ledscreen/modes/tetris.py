@@ -99,9 +99,23 @@ class TetrisMode(Mode):
 
     def _new_board(self) -> None:
         self._board = [[None for _ in range(COLS)] for _ in range(ROWS)]
+        self._seed_clutter()
         self._score = 0
         self._next_type = random.choice(list(PIECES))
         self._spawn_piece()
+
+    def _seed_clutter(self) -> None:
+        # Start mid-game rather than on an empty field: pre-fill a messy
+        # stack in the bottom rows, well clear of the spawn area.
+        clutter_rows = random.randint(4, 7)
+        fill_chance = random.uniform(0.45, 0.65)
+        colors = list(PIECE_COLORS.values())
+        for r in range(ROWS - clutter_rows, ROWS):
+            filled_cols = [c for c in range(COLS) if random.random() < fill_chance]
+            if len(filled_cols) >= COLS:
+                filled_cols.pop(random.randrange(COLS))  # never start with an already-complete row
+            for c in filled_cols:
+                self._board[r][c] = random.choice(colors)
 
     def _cells(self, piece_type: str, rotation: int) -> list[tuple[int, int]]:
         states = PIECES[piece_type]
