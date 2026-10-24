@@ -7,10 +7,14 @@ from .modes.analog_clock import AnalogClockMode
 from .modes.aquarium import AquariumMode
 from .modes.clock import ClockMode
 from .modes.ecosystem import EcosystemMode
+from .modes.gauge_clock import GaugeClockMode
+from .modes.giant_clock import GiantClockMode
 from .modes.life import LifeMode
 from .modes.orbit_clock import OrbitClockMode
 from .modes.pong import PongMode
+from .modes.rings_clock import RingsClockMode
 from .modes.sand import SandMode
+from .modes.thick_ring_clock import ThickRingClockMode
 from .rotation import RotationController
 
 FPS = 30
@@ -19,6 +23,10 @@ MODES = {
     "clock": ClockMode,
     "analog_clock": AnalogClockMode,
     "orbit_clock": OrbitClockMode,
+    "rings_clock": RingsClockMode,
+    "gauge_clock": GaugeClockMode,
+    "giant_clock": GiantClockMode,
+    "thick_ring_clock": ThickRingClockMode,
     "life": LifeMode,
     "ecosystem": EcosystemMode,
     "sand": SandMode,
@@ -32,6 +40,10 @@ def build_rotation(clock_lead: float, fun_duration: float) -> RotationController
         ClockMode(),
         AnalogClockMode(),
         OrbitClockMode(),
+        RingsClockMode(),
+        GaugeClockMode(),
+        GiantClockMode(),
+        ThickRingClockMode(),
     ]
     fun_modes = [
         LifeMode(),
