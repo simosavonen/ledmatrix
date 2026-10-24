@@ -109,4 +109,4 @@ class AquariumMode(Mode):
             dim = tuple(c // 3 for c in b["color"])
             canvas.draw_dot(tail_x, tail_y, 0.6, dim)
             canvas.draw_dot(b["x"], b["y"], 0.9, b["color"])
-        canvas.bloom(radius=1.0, strength=0.35)
+        canvas.bloom()

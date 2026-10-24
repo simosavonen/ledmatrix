@@ -97,7 +97,7 @@ class Canvas:
             t = i / steps
             self.draw_dot(x0 + (x1 - x0) * t, y0 + (y1 - y0) * t, width / 2, color)
 
-    def bloom(self, radius: float = 1.2, strength: float = 0.55) -> None:
+    def bloom(self, radius: float = 1.0, strength: float = 0.3) -> None:
         """Blurs a dimmed copy of the frame and screen-blends it back in, so
         lit pixels bleed softly into their neighbors instead of looking like
         flat, hard-edged blocks. Cheap - fine to call every frame."""

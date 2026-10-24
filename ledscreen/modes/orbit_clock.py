@@ -64,5 +64,4 @@ class OrbitClockMode(Mode):
 
         plot(0, 0, 1.4, CENTER_COLOR)  # the true dial center, arcing around the fixed anchor
         plot(math.sin(sec_angle) * RADIUS, -math.cos(sec_angle) * RADIUS, 1.6, TIP_COLOR)  # the second-hand tip, arcing the other way
-        # Same thick-stroke compounding as the other clock faces.
-        canvas.bloom(radius=1.0, strength=0.3)
+        canvas.bloom()

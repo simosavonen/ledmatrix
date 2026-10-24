@@ -57,4 +57,4 @@ class MatrixRainMode(Mode):
                 )
                 canvas.set_pixel(drop["x"], py, color)
 
-        canvas.bloom(radius=0.8, strength=0.4)
+        canvas.bloom()

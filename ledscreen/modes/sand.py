@@ -119,4 +119,4 @@ class SandMode(Mode):
                     canvas.set_pixel(x, y, SAND_COLOR)
                 elif material == "water":
                     canvas.set_pixel(x, y, WATER_COLOR)
-        canvas.bloom(radius=1.0, strength=0.4)
+        canvas.bloom()

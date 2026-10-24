@@ -47,6 +47,4 @@ class AnalogClockMode(Mode):
             SECOND_COLOR, width=0.8,
         )
         canvas.draw_dot(cx, cy, 0.8, MINUTE_COLOR)
-        # The hands converge at the hub, so several strokes overlap there -
-        # same compounding issue as the clock digits and Pong paddles.
-        canvas.bloom(radius=1.0, strength=0.3)
+        canvas.bloom()
