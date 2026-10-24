@@ -4,70 +4,80 @@ from datetime import datetime
 from ..canvas import Canvas
 from .base import Mode
 
-"""Top-down racer: a randomly-winding road scrolls toward the viewer and an
-AI driver tries to stay on it. Like Pong's AI, it has real lapses in
-attention - on a sharp curve during a lapse it can genuinely run off the
-road, which ends the race and starts a fresh one."""
+"""Top-down racer, simplified to a single winding spline instead of a
+painted road: the car sits off to one side so you can see the road curving
+ahead of it, driving left-to-right for a while, then turning around and
+driving right-to-left, forever. An AI driver tries to track the line, with
+real attention lapses - a lapse during a sharp curve can genuinely run the
+car off the line, which ends the leg and starts a fresh one."""
 
-STEP_INTERVAL = 0.1  # one simulation tick = one new track row
+STEP_INTERVAL = 0.12  # one simulation tick = one new spline column
 
-ROAD_WIDTH = 20
-EDGE_COLOR = (230, 210, 60)
-DASH_COLOR = (150, 150, 160)
+ROAD_COLOR = (90, 160, 230)
 CAR_COLOR = (230, 60, 40)
 CRASH_COLOR = (255, 255, 255)
 
-MAX_CURVE_VEL = 0.9  # px of center-drift per row
+MAX_CURVE_VEL = 0.9  # px of line-drift per column
 CURVE_ACCEL = 0.25
 
-MAX_STEER_SPEED = 16.0  # px/sec
-STEER_RESPONSIVENESS = 0.35  # how quickly car_vx approaches its target each tick
+MAX_STEER_SPEED = 20.0  # px/sec, vertical
+STEER_RESPONSIVENESS = 0.35
 LAPSE_CHANCE = 0.03  # per tick
 LAPSE_DURATION = (0.3, 0.9)
-CRASH_GRACE = 0.3  # seconds continuously off-road before it counts as a crash
+TOLERANCE = 3.0  # px the car may drift from the line before it's "off"
+CRASH_GRACE = 0.3
 CRASH_FLASH_DURATION = 0.6
 
-CAR_ROW_FROM_BOTTOM = 7
+CAR_EDGE_MARGIN = 14  # how far from the leading-opposite edge the car sits
+LEG_DURATION = (12.0, 20.0)  # seconds driving one way before turning around
+CAR_EASE = 0.15  # how quickly the car slides to its new side when turning around
 
 
 class RaceMode(Mode):
     name = "race"
 
     def __init__(self):
-        self._centers: list[float] = []
+        self._spline: list[float] = []
         self._curve_vel = 0.0
+        self._direction = 1  # +1 = driving left-to-right, -1 = right-to-left
         self._car_x = 0.0
-        self._car_vx = 0.0
+        self._car_y = 0.0
+        self._car_vy = 0.0
         self._lapse = 0.0
-        self._offroad_time = 0.0
+        self._off_time = 0.0
         self._crash_flash = 0.0
+        self._leg_timer = 0.0
         self._last_step: datetime | None = None
         self._w = self._h = 0
-        self._car_row = 0
 
     def reset(self) -> None:
-        self._centers = []
+        self._spline = []
         self._last_step = None
 
     def _margin(self) -> float:
-        return ROAD_WIDTH / 2 + 2
+        return 4.0
 
     def _init(self, canvas: Canvas) -> None:
         self._w, self._h = canvas.width, canvas.height
-        self._car_row = self._h - CAR_ROW_FROM_BOTTOM
-        self._reset_race()
+        self._direction = random.choice([1, -1])
+        self._car_x = self._target_car_x()
+        self._new_leg()
 
-    def _reset_race(self) -> None:
-        start = self._w / 2
-        self._centers = [start for _ in range(self._h)]
+    def _target_car_x(self) -> float:
+        return CAR_EDGE_MARGIN if self._direction == 1 else self._w - CAR_EDGE_MARGIN
+
+    def _new_leg(self) -> None:
+        mid = self._h / 2
+        self._spline = [mid for _ in range(self._w)]
         self._curve_vel = 0.0
-        self._car_x = start
-        self._car_vx = 0.0
+        self._car_y = mid
+        self._car_vy = 0.0
         self._lapse = 0.0
-        self._offroad_time = 0.0
+        self._off_time = 0.0
         self._crash_flash = 0.0
+        self._leg_timer = random.uniform(*LEG_DURATION)
 
-    def _next_center(self, prev: float) -> float:
+    def _next_value(self, prev: float) -> float:
         self._curve_vel += random.uniform(-CURVE_ACCEL, CURVE_ACCEL)
         self._curve_vel = max(-MAX_CURVE_VEL, min(MAX_CURVE_VEL, self._curve_vel))
         new = prev + self._curve_vel
@@ -75,45 +85,58 @@ class RaceMode(Mode):
         if new < margin:
             new = margin
             self._curve_vel = abs(self._curve_vel)
-        elif new > self._w - margin:
-            new = self._w - margin
+        elif new > self._h - margin:
+            new = self._h - margin
             self._curve_vel = -abs(self._curve_vel)
         return new
+
+    def _car_column(self) -> int:
+        return max(0, min(self._w - 1, int(round(self._car_x))))
 
     def _step(self) -> None:
         if self._crash_flash > 0:
             self._crash_flash -= STEP_INTERVAL
             if self._crash_flash <= 0:
-                self._reset_race()
+                self._new_leg()
             return
 
-        # scroll the road one row toward the viewer
-        self._centers.pop()
-        self._centers.insert(0, self._next_center(self._centers[0]))
+        self._leg_timer -= STEP_INTERVAL
+        if self._leg_timer <= 0:
+            self._direction *= -1
+            self._leg_timer = random.uniform(*LEG_DURATION)
 
-        target = self._centers[self._car_row]
+        # scroll the spline one column in the direction of travel: new track
+        # appears at the leading edge, old track exits behind the car
+        if self._direction == 1:
+            self._spline.pop(0)
+            self._spline.append(self._next_value(self._spline[-1]))
+        else:
+            self._spline.pop()
+            self._spline.insert(0, self._next_value(self._spline[0]))
+
+        self._car_x += (self._target_car_x() - self._car_x) * CAR_EASE
+
+        target = self._spline[self._car_column()]
         if self._lapse > 0:
             self._lapse -= STEP_INTERVAL
         elif random.random() < LAPSE_CHANCE:
             self._lapse = random.uniform(*LAPSE_DURATION)
         else:
-            desired_vx = max(-MAX_STEER_SPEED, min(MAX_STEER_SPEED, (target - self._car_x) * 2.0))
-            self._car_vx += (desired_vx - self._car_vx) * STEER_RESPONSIVENESS
+            desired_vy = max(-MAX_STEER_SPEED, min(MAX_STEER_SPEED, (target - self._car_y) * 2.0))
+            self._car_vy += (desired_vy - self._car_vy) * STEER_RESPONSIVENESS
 
-        self._car_x += self._car_vx * STEP_INTERVAL
-        self._car_x = max(1.0, min(self._w - 1.0, self._car_x))
+        self._car_y += self._car_vy * STEP_INTERVAL
+        self._car_y = max(1.0, min(self._h - 1.0, self._car_y))
 
-        road_left = target - ROAD_WIDTH / 2
-        road_right = target + ROAD_WIDTH / 2
-        if self._car_x < road_left or self._car_x > road_right:
-            self._offroad_time += STEP_INTERVAL
-            if self._offroad_time > CRASH_GRACE:
+        if abs(self._car_y - target) > TOLERANCE:
+            self._off_time += STEP_INTERVAL
+            if self._off_time > CRASH_GRACE:
                 self._crash_flash = CRASH_FLASH_DURATION
         else:
-            self._offroad_time = 0.0
+            self._off_time = 0.0
 
     def render(self, canvas: Canvas, now: datetime) -> None:
-        if not self._centers or self._last_step is None:
+        if not self._spline or self._last_step is None:
             self._init(canvas)
             self._last_step = now
 
@@ -122,27 +145,17 @@ class RaceMode(Mode):
             self._step()
 
         canvas.clear((0, 0, 0))
-        for y in range(self._h):
-            center = self._centers[y]
-            left = int(center - ROAD_WIDTH / 2)
-            right = int(center + ROAD_WIDTH / 2)
-            if 0 <= left < self._w:
-                canvas.set_pixel(left, y, EDGE_COLOR)
-            if 0 <= right < self._w:
-                canvas.set_pixel(right, y, EDGE_COLOR)
-            if y % 4 < 2:
-                cx = int(center)
-                if 0 <= cx < self._w:
-                    canvas.set_pixel(cx, y, DASH_COLOR)
+        for x in range(self._w):
+            canvas.draw_dot(x, self._spline[x], 0.6, ROAD_COLOR)
 
         if self._crash_flash > 0:
             flash_on = int(self._crash_flash / STEP_INTERVAL) % 2 == 0
             color = CRASH_COLOR if flash_on else CAR_COLOR
-            canvas.draw_dot(self._car_x, self._car_row, 1.6, color)
+            canvas.draw_dot(self._car_x, self._car_y, 1.6, color)
         else:
-            tail_x = self._car_x - self._car_vx * 0.03
+            tail_x = self._car_x - self._direction * 2.5
             dim = tuple(c // 3 for c in CAR_COLOR)
-            canvas.draw_dot(tail_x, self._car_row + 1, 0.7, dim)
-            canvas.draw_dot(self._car_x, self._car_row, 1.1, CAR_COLOR)
+            canvas.draw_dot(tail_x, self._car_y, 0.7, dim)
+            canvas.draw_dot(self._car_x, self._car_y, 1.1, CAR_COLOR)
 
         canvas.bloom()
