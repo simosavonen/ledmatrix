@@ -15,6 +15,7 @@ from .modes.pong import PongMode
 from .modes.race import RaceMode
 from .modes.rings_clock import RingsClockMode
 from .modes.sand import SandMode
+from .modes.tetris import TetrisMode
 from .modes.thick_ring_clock import ThickRingClockMode
 from .rotation import RotationController
 
@@ -34,6 +35,7 @@ MODES = {
     "aquarium": AquariumMode,
     "pong": PongMode,
     "race": RaceMode,
+    "tetris": TetrisMode,
 }
 
 
@@ -54,6 +56,7 @@ def build_rotation(clock_lead: float, fun_duration: float) -> RotationController
         AquariumMode(),
         PongMode(),
         RaceMode(),
+        TetrisMode(),
     ]
     return RotationController(
         clock_modes=clock_modes,
