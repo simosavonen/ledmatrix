@@ -1,6 +1,6 @@
 import argparse
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from .canvas import Canvas
 from .modes.aquarium import AquariumMode
@@ -25,19 +25,19 @@ MODES = {
 }
 
 
-def build_rotation(fun_every: float, fun_duration: float) -> RotationController:
+def build_rotation(clock_lead: float, fun_duration: float) -> RotationController:
     anchor = ClockMode()
     fun_modes = [MatrixRainMode(), LifeMode(), EcosystemMode(), SandMode(), AquariumMode(), PongMode()]
     return RotationController(
         anchor=anchor,
         fun_modes=fun_modes,
-        fun_every=timedelta(minutes=fun_every),
-        fun_duration=timedelta(seconds=fun_duration),
+        clock_lead=clock_lead,
+        fun_duration=fun_duration,
     )
 
 
-def run_live(display, fun_every: float, fun_duration: float) -> None:
-    rotation = build_rotation(fun_every, fun_duration)
+def run_live(display, clock_lead: float, fun_duration: float) -> None:
+    rotation = build_rotation(clock_lead, fun_duration)
     canvas = Canvas(display.width, display.height)
     period = 1.0 / FPS
     try:
@@ -82,7 +82,9 @@ def main() -> None:
     )
     parser.add_argument("--mode", choices=list(MODES), default="clock", help="mode to use with --snapshot")
     parser.add_argument("--duration", type=float, default=3.0, help="seconds to run before --snapshot")
-    parser.add_argument("--fun-every", type=float, default=5.0, help="minutes between fun-mode breaks")
+    parser.add_argument(
+        "--clock-lead", type=float, default=10.0, help="seconds into each minute before switching to a fun mode"
+    )
     parser.add_argument("--fun-duration", type=float, default=45.0, help="seconds each fun-mode break lasts")
     parser.add_argument("--brightness", type=int, default=30, help="real hardware only, percent 1-100")
     parser.add_argument("--gpio-slowdown", type=int, default=4, help="real hardware only")
@@ -104,7 +106,7 @@ def main() -> None:
 
         display = MatrixDisplay(brightness=args.brightness, gpio_slowdown=args.gpio_slowdown)
 
-    run_live(display, args.fun_every, args.fun_duration)
+    run_live(display, args.clock_lead, args.fun_duration)
 
 
 if __name__ == "__main__":
