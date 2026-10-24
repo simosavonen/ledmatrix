@@ -85,3 +85,4 @@ class LifeMode(Mode):
         canvas.clear((0, 0, 0))
         for (x, y) in self._grid:
             canvas.set_pixel(x, y, color)
+        canvas.bloom()

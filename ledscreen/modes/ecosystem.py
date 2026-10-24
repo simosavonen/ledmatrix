@@ -146,3 +146,4 @@ class EcosystemMode(Mode):
                 if cell is None:
                     continue
                 canvas.set_pixel(x, y, FISH_COLOR if cell["kind"] == "fish" else SHARK_COLOR)
+        canvas.bloom()

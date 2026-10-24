@@ -1,4 +1,4 @@
-from PIL import Image
+from PIL import Image, ImageChops, ImageFilter
 
 from . import font as fontmod
 
@@ -88,6 +88,17 @@ class Canvas:
         for char in text:
             cursor += self.draw_glyph(cursor, y, char, color, scale)
         return cursor - x
+
+    def bloom(self, radius: float = 1.2, strength: float = 0.55) -> None:
+        """Blurs a dimmed copy of the frame and screen-blends it back in, so
+        lit pixels bleed softly into their neighbors instead of looking like
+        flat, hard-edged blocks. Cheap - fine to call every frame."""
+        if strength <= 0:
+            return
+        blurred = self.image.filter(ImageFilter.GaussianBlur(radius))
+        if strength < 1.0:
+            blurred = blurred.point(lambda p: int(p * strength))
+        self.image = ImageChops.screen(self.image, blurred)
 
     def text_width(self, text: str, scale: int = 1) -> int:
         glyph_w = fontmod.GLYPH_WIDTH * scale + scale

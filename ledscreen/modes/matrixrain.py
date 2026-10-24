@@ -56,3 +56,5 @@ class MatrixRainMode(Mode):
                     int(HEAD_COLOR[i] * (1 - t) + TAIL_COLOR[i] * t) for i in range(3)
                 )
                 canvas.set_pixel(drop["x"], py, color)
+
+        canvas.bloom(radius=0.8, strength=0.4)
