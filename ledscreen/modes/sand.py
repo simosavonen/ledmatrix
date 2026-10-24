@@ -21,8 +21,12 @@ POUR_GAP_STEPS = (75, 225)  # ~3-9s of no sand between pours
 POUR_RATE = 2  # sand grains attempted per step while a pour is active
 POUR_SPREAD = 1  # pour wanders +-1 column around its center, like a loose stream
 
+PLATFORM_COUNT = (2, 3)
+PLATFORM_WIDTH = (10, 22)
+
 SAND_COLOR = (210, 170, 80)
 WATER_COLOR = (40, 130, 230)
+PLATFORM_COLOR = (95, 85, 80)
 
 
 class SandMode(Mode):
@@ -48,8 +52,21 @@ class SandMode(Mode):
     def _init(self, canvas: Canvas) -> None:
         self._w, self._h = canvas.width, canvas.height
         self._grid = [[None for _ in range(self._w)] for _ in range(self._h)]
+        self._seed_platforms()
         self._pour_remaining = 0
         self._next_pour_in = random.randint(10, 50)  # a pour starts soon after reset, not after a long wait
+
+    def _seed_platforms(self) -> None:
+        # Fixed, immovable ledges for sand and water to pile on and spill
+        # off of - a few random ones each round, kept clear of the spawn
+        # row up top and with room below to pile up before overflowing.
+        count = random.randint(*PLATFORM_COUNT)
+        for _ in range(count):
+            width = random.randint(*PLATFORM_WIDTH)
+            x0 = random.randint(0, max(0, self._w - width))
+            y = random.randint(self._h // 3, self._h - 4)
+            for x in range(x0, min(self._w, x0 + width)):
+                self._grid[y][x] = "platform"
 
     def _empty(self, x: int, y: int) -> bool:
         if x < 0 or x >= self._w or y < 0 or y >= self._h:
@@ -114,7 +131,7 @@ class SandMode(Mode):
                 if (x, y) in moved:
                     continue
                 material = self._grid[y][x]
-                if material is None:
+                if material is None or material == "platform":
                     continue
                 nx, ny = self._move_target(x, y, material)
                 if (nx, ny) != (x, y):
@@ -133,6 +150,7 @@ class SandMode(Mode):
             filled = sum(1 for row in self._grid for c in row if c is not None)
             if filled / (self._w * self._h) > FILL_CLEAR_THRESHOLD:
                 self._grid = [[None for _ in range(self._w)] for _ in range(self._h)]
+                self._seed_platforms()
                 self._pour_remaining = 0
                 self._next_pour_in = random.randint(10, 50)
 
@@ -153,4 +171,6 @@ class SandMode(Mode):
                     canvas.set_pixel(x, y, SAND_COLOR)
                 elif material == "water":
                     canvas.set_pixel(x, y, WATER_COLOR)
+                elif material == "platform":
+                    canvas.set_pixel(x, y, PLATFORM_COLOR)
         canvas.bloom()
