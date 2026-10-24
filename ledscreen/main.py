@@ -100,6 +100,13 @@ def main() -> None:
     parser.add_argument("--fun-duration", type=float, default=45.0, help="seconds each fun-mode break lasts")
     parser.add_argument("--brightness", type=int, default=30, help="real hardware only, percent 1-100")
     parser.add_argument("--gpio-slowdown", type=int, default=4, help="real hardware only")
+    parser.add_argument(
+        "--hardware-pulsing",
+        action="store_true",
+        help="real hardware only - requires the GPIO4/GPIO18 jumper to be soldered on the HAT; "
+        "routes refresh timing through a hardware clock instead of software bit-banging, which "
+        "removes most OS-scheduling-induced flicker",
+    )
     args = parser.parse_args()
 
     if args.snapshot:
@@ -116,7 +123,11 @@ def main() -> None:
     else:
         from .display.matrix import MatrixDisplay
 
-        display = MatrixDisplay(brightness=args.brightness, gpio_slowdown=args.gpio_slowdown)
+        display = MatrixDisplay(
+            brightness=args.brightness,
+            gpio_slowdown=args.gpio_slowdown,
+            hardware_pulsing=args.hardware_pulsing,
+        )
 
     run_live(display, args.clock_lead, args.fun_duration)
 
