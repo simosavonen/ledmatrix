@@ -129,4 +129,6 @@ class PongMode(Mode):
         canvas.draw_dot(s["ball_x"], s["ball_y"], BALL_RADIUS, BALL_COLOR)
         canvas.draw_text(8, 1, str(s["left_score"]), LEFT_COLOR, scale=1)
         canvas.draw_text(canvas.width - 13, 1, str(s["right_score"]), RIGHT_COLOR, scale=1)
-        canvas.bloom()
+        # The 2-column-wide paddles compound the default bloom across their
+        # neighboring lit columns, same issue as the clock digits.
+        canvas.bloom(radius=1.0, strength=0.3)

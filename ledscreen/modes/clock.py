@@ -33,4 +33,7 @@ class ClockMode(Mode):
         fraction = (now.second + now.microsecond / 1_000_000) / 60.0
         filled = int(fraction * canvas.width)
         canvas.draw_hline(canvas.height - 1, 0, filled, SECONDS_BAR_COLOR)
-        canvas.bloom()
+        # The 2x-scale digits are multiple pixels wide per stroke, so the
+        # default bloom (tuned for hairline features) compounds across
+        # neighboring lit columns and comes out much brighter than intended.
+        canvas.bloom(radius=1.0, strength=0.3)
