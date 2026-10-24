@@ -8,11 +8,13 @@ from .base import Mode
 occasional lapses in attention, so points - and misses - happen for real."""
 
 PADDLE_HEIGHT = 7
+PADDLE_WIDTH = 2
 PADDLE_SPEED = 28.0
 PADDLE_X_LEFT = 2
-PADDLE_X_RIGHT = 61
+PADDLE_X_RIGHT = 60
 BALL_SPEED_START = 20.0
 BALL_SPEED_MAX = 42.0
+BALL_RADIUS = 1.0
 
 LEFT_COLOR = (70, 210, 230)
 RIGHT_COLOR = (230, 80, 190)
@@ -111,9 +113,8 @@ class PongMode(Mode):
             self._new_rally(canvas, serve_dir=-1)
 
         canvas.clear((0, 0, 0))
-        for i in range(PADDLE_HEIGHT):
-            canvas.set_pixel(PADDLE_X_LEFT, int(s["left_y"]) + i, LEFT_COLOR)
-            canvas.set_pixel(PADDLE_X_RIGHT, int(s["right_y"]) + i, RIGHT_COLOR)
-        canvas.set_pixel(int(s["ball_x"]), int(s["ball_y"]), BALL_COLOR)
+        canvas.draw_vbar_aa(PADDLE_X_LEFT, PADDLE_WIDTH, s["left_y"], s["left_y"] + PADDLE_HEIGHT, LEFT_COLOR)
+        canvas.draw_vbar_aa(PADDLE_X_RIGHT, PADDLE_WIDTH, s["right_y"], s["right_y"] + PADDLE_HEIGHT, RIGHT_COLOR)
+        canvas.draw_dot(s["ball_x"], s["ball_y"], BALL_RADIUS, BALL_COLOR)
         canvas.draw_text(8, 1, str(s["left_score"]), LEFT_COLOR, scale=1)
         canvas.draw_text(canvas.width - 13, 1, str(s["right_score"]), RIGHT_COLOR, scale=1)

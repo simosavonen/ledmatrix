@@ -29,6 +29,44 @@ class Canvas:
         for x in range(x0, x1):
             self.set_pixel(x, y, color)
 
+    def blend_pixel(self, x: int, y: int, color: Color, alpha: float) -> None:
+        """Mixes `color` into the existing pixel by `alpha` (0..1 coverage)."""
+        if alpha <= 0:
+            return
+        if alpha >= 1:
+            self.set_pixel(x, y, color)
+            return
+        if not (0 <= x < self.width and 0 <= y < self.height):
+            return
+        bg = self.get_pixel(x, y)
+        blended = tuple(int(bg[i] * (1 - alpha) + color[i] * alpha) for i in range(3))
+        self.set_pixel(x, y, blended)
+
+    def draw_dot(self, cx: float, cy: float, radius: float, color: Color) -> None:
+        """Soft, anti-aliased circular dot at a sub-pixel position - for a
+        moving object, this makes it slide smoothly instead of jumping
+        between whole pixels and looking like it only 'scraped' a cell."""
+        x0, x1 = int(cx - radius - 1), int(cx + radius + 2)
+        y0, y1 = int(cy - radius - 1), int(cy + radius + 2)
+        for y in range(y0, y1):
+            for x in range(x0, x1):
+                dist = ((x + 0.5 - cx) ** 2 + (y + 0.5 - cy) ** 2) ** 0.5
+                coverage = max(0.0, min(1.0, radius + 0.5 - dist))
+                if coverage > 0:
+                    self.blend_pixel(x, y, color, coverage)
+
+    def draw_vbar_aa(self, x: int, width: int, y0: float, y1: float, color: Color) -> None:
+        """A `width`-column-wide vertical bar spanning the float range
+        [y0, y1), with anti-aliased top/bottom edges so it slides smoothly."""
+        top, bottom = int(y0) - 1, int(y1) + 1
+        for y in range(max(0, top), bottom + 1):
+            coverage = max(0.0, min(y + 1, y1) - max(y, y0))
+            coverage = max(0.0, min(1.0, coverage))
+            if coverage <= 0:
+                continue
+            for xx in range(x, x + width):
+                self.blend_pixel(xx, y, color, coverage)
+
     def draw_glyph(self, x: int, y: int, char: str, color: Color, scale: int = 1) -> int:
         """Draws one character at (x, y), returns the width consumed (incl. gap)."""
         rows = fontmod.glyph(char)

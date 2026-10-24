@@ -104,8 +104,8 @@ class AquariumMode(Mode):
 
         canvas.clear((0, 0, 0))
         for b in self._boids:
-            canvas.set_pixel(int(b["x"]), int(b["y"]), b["color"])
-            tail_x = int(b["x"] - b["vx"] * 0.05)
-            tail_y = int(b["y"] - b["vy"] * 0.05)
+            tail_x = b["x"] - b["vx"] * 0.05
+            tail_y = b["y"] - b["vy"] * 0.05
             dim = tuple(c // 3 for c in b["color"])
-            canvas.set_pixel(tail_x, tail_y, dim)
+            canvas.draw_dot(tail_x, tail_y, 0.6, dim)
+            canvas.draw_dot(b["x"], b["y"], 0.9, b["color"])
