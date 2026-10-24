@@ -85,6 +85,24 @@ def run_live(display, clock_lead: float, fun_duration: float) -> None:
         display.close()
 
 
+def run_single(display, mode_name: str) -> None:
+    mode = MODES[mode_name]()
+    canvas = Canvas(display.width, display.height)
+    period = 1.0 / FPS
+    try:
+        while True:
+            start = time.monotonic()
+            now = datetime.now()
+            mode.render(canvas, now)
+            display.show(canvas)
+            elapsed = time.monotonic() - start
+            time.sleep(max(0.0, period - elapsed))
+    except KeyboardInterrupt:
+        pass
+    finally:
+        display.close()
+
+
 def run_snapshot(display, mode_name: str, duration: float, out_path: str) -> None:
     mode = MODES[mode_name]()
     canvas = Canvas(display.width, display.height)
@@ -111,6 +129,12 @@ def main() -> None:
         help="headless: run a single mode briefly and save a PNG snapshot, then exit",
     )
     parser.add_argument("--mode", choices=list(MODES), default="clock", help="mode to use with --snapshot")
+    parser.add_argument(
+        "--only",
+        choices=list(MODES),
+        help="loop just this one mode forever instead of the normal rotation - lets you preview a "
+        "mode on demand instead of waiting for it to come up randomly",
+    )
     parser.add_argument("--duration", type=float, default=3.0, help="seconds to run before --snapshot")
     parser.add_argument(
         "--clock-lead", type=float, default=10.0, help="seconds into each minute before switching to a fun mode"
@@ -147,7 +171,10 @@ def main() -> None:
             hardware_pulsing=args.hardware_pulsing,
         )
 
-    run_live(display, args.clock_lead, args.fun_duration)
+    if args.only:
+        run_single(display, args.only)
+    else:
+        run_live(display, args.clock_lead, args.fun_duration)
 
 
 if __name__ == "__main__":
