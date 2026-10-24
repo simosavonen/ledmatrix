@@ -35,8 +35,16 @@ class MatrixDisplay(Display):
         self._frame_canvas = self.matrix.CreateFrameCanvas()
 
     def show(self, canvas: Canvas) -> None:
-        self._frame_canvas.SetImage(canvas.image.convert("RGB"))
-        self._frame_canvas = self.matrix.SwapOnVSync(self._frame_canvas)
+        # Avoid SetImage()'s Pillow fast-path: it depends on Pillow's private
+        # C internals, which break across Pillow versions. Plain SetPixel is
+        # slower per-call but this canvas is tiny (2048px), so it's a non-issue.
+        pixels = canvas.image.load()
+        fc = self._frame_canvas
+        for y in range(canvas.height):
+            for x in range(canvas.width):
+                r, g, b = pixels[x, y]
+                fc.SetPixel(x, y, r, g, b)
+        self._frame_canvas = self.matrix.SwapOnVSync(fc)
 
     def close(self) -> None:
         self.matrix.Clear()
