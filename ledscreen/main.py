@@ -30,7 +30,11 @@ MODES = {
 
 
 def build_rotation(clock_lead: float, fun_duration: float) -> RotationController:
-    anchor = ClockMode()
+    clock_modes = [
+        ClockMode(),
+        AnalogClockMode(),
+        OrbitClockMode(),
+    ]
     fun_modes = [
         MatrixRainMode(),
         LifeMode(),
@@ -38,11 +42,9 @@ def build_rotation(clock_lead: float, fun_duration: float) -> RotationController
         SandMode(),
         AquariumMode(),
         PongMode(),
-        AnalogClockMode(),
-        OrbitClockMode(),
     ]
     return RotationController(
-        anchor=anchor,
+        clock_modes=clock_modes,
         fun_modes=fun_modes,
         clock_lead=clock_lead,
         fun_duration=fun_duration,
