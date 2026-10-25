@@ -49,15 +49,11 @@ def build_rotation(clock_lead: float, fun_duration: float) -> RotationController
         GiantClockMode(),
         ThickRingClockMode(),
     ]
-    fun_modes = [
-        LifeMode(),
-        EcosystemMode(),
-        SandMode(),
-        AquariumMode(),
-        PongMode(),
-        RaceMode(),
-        TetrisMode(),
-    ]
+    # Fun modes disabled per user feedback: the wall display needs to stay
+    # readable as a clock/date/weather screen at a glance, not cut away to
+    # games/sims. Kept importable (and in MODES, for --only preview) so
+    # nothing is lost, just excluded from the live rotation.
+    fun_modes: list = []
     return RotationController(
         clock_modes=clock_modes,
         fun_modes=fun_modes,
