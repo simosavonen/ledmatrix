@@ -10,6 +10,7 @@ from .modes.ecosystem import EcosystemMode
 from .modes.gauge_clock import GaugeClockMode
 from .modes.giant_clock import GiantClockMode
 from .modes.life import LifeMode
+from .modes.marble_clock import MarbleClockMode
 from .modes.orbit_clock import OrbitClockMode
 from .modes.pong import PongMode
 from .modes.race import RaceMode
@@ -29,6 +30,7 @@ MODES = {
     "gauge_clock": GaugeClockMode,
     "giant_clock": GiantClockMode,
     "thick_ring_clock": ThickRingClockMode,
+    "marble_clock": MarbleClockMode,
     "life": LifeMode,
     "ecosystem": EcosystemMode,
     "sand": SandMode,
@@ -48,6 +50,7 @@ def build_rotation(clock_lead: float, fun_duration: float) -> RotationController
         GaugeClockMode(),
         GiantClockMode(),
         ThickRingClockMode(),
+        MarbleClockMode(),
     ]
     # Fun modes disabled per user feedback: the wall display needs to stay
     # readable as a clock/date/weather screen at a glance, not cut away to
