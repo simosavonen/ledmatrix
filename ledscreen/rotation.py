@@ -1,5 +1,5 @@
 import random
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from .modes.base import Mode
 
@@ -11,6 +11,11 @@ class RotationController:
     so you see it tick over live. The clock face itself also rotates once
     per minute on its own - it doesn't just wait for a fun break to end,
     so rotation still works with `fun_modes` empty.
+
+    The clock-side switch is likewise offset by `clock_lead` seconds past
+    the minute (not exactly on it), so whichever face is up gets to show
+    the 59->00 rollover - the most interesting moment - before handing off
+    to the next face, instead of cutting away right as it happens.
 
     Both the clock and the fun break are drawn from a shuffled bag per
     pool, so every style gets shown before any style repeats, instead of
@@ -50,6 +55,7 @@ class RotationController:
             and self.clock_lead <= second_of_minute < self.clock_lead + self.fun_duration
         )
         cycle_key = now.replace(second=0, microsecond=0)
+        clock_cycle_key = (now - timedelta(seconds=self.clock_lead)).replace(second=0, microsecond=0)
 
         if should_be_fun:
             if not self._in_fun or cycle_key != self._fun_cycle_key:
@@ -58,10 +64,10 @@ class RotationController:
                 self._fun_cycle_key = cycle_key
             self._in_fun = True
         else:
-            if self._in_fun or cycle_key != self._clock_cycle_key:
+            if self._in_fun or clock_cycle_key != self._clock_cycle_key:
                 self._current = self._next_from(self._clock_bag, self.clock_modes)
                 self._current.reset()
-                self._clock_cycle_key = cycle_key
+                self._clock_cycle_key = clock_cycle_key
             self._in_fun = False
 
         return self._current
