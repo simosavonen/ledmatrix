@@ -40,14 +40,16 @@ MODES = {
 
 
 def build_rotation(clock_lead: float, fun_duration: float) -> RotationController:
+    # rings_clock, giant_clock, and thick_ring_clock dropped from rotation
+    # per readability review - no exact digits on screen at a glance
+    # (rings_clock, thick_ring_clock) or the full time never fully visible
+    # at once (giant_clock panning off-screen). Kept importable (and in
+    # MODES, for --only preview) so nothing is lost, just excluded here.
     clock_modes = [
         ClockMode(),
         AnalogClockMode(),
         OrbitClockMode(),
-        RingsClockMode(),
         GaugeClockMode(),
-        GiantClockMode(),
-        ThickRingClockMode(),
     ]
     # Fun modes disabled per user feedback: the wall display needs to stay
     # readable as a clock/date/weather screen at a glance, not cut away to
